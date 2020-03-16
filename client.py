@@ -2,10 +2,9 @@
 
 import socket
 import json
-from tkinter import *
+import tkinter as tk
 import threading
 import queue
-import argparse
 import time
 
 queue_1 = queue.Queue(maxsize=1)  # queue for user instruction to send to server.py
@@ -32,7 +31,7 @@ class ReceiveData(threading.Thread):
         self.UDP_IP = "localhost"
         self.UDP_PORT = 5006
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(2)
+        self.sock.settimeout(10)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
@@ -66,23 +65,81 @@ class WriteToJSON(threading.Thread):
 
 class GraphicalUserInterface:
     def __init__(self):
-        self.window = Tk()
+        self.window = tk.Tk()
         self.window.title("Open Hardware Monitor")
         self.window.geometry('400x250')
+        self.instructions = {'temperature': False, 'load': False, 'fan': False}
+
+    def instruction_collector(self):
+        label = tk.Label(master=self.window, text="Select the data you would like from OpenHardwareMonitor:")
+        label.pack()
+
+        temp_button = tk.Button(command=self.button_click_temp, master=self.window, text='temperature')
+        temp_button.pack(side="top")
+
+        load_button = tk.Button(command=self.button_click_load, master=self.window, text='load')
+        load_button.pack(side="top")
+
+        fan_button = tk.Button(command=self.button_click_fan, master=self.window, text='fan speed')
+        fan_button.pack(side="top")
+
+        tk.Button(master=self.window, text='get results', command=self.quit).pack(side='top')
+
         self.window.mainloop()
+        return self.instructions
+
+    def button_click_temp(self):
+        self.instructions['temperature'] = True
+
+    def button_click_load(self):
+        self.instructions['load'] = True
+
+    def button_click_fan(self):
+        self.instructions['fan'] = True
+
+    def quit(self):
+        self.window.destroy()
 
 
 if __name__ == '__main__':
-    # gui = GraphicalUserInterface()
+    gui = GraphicalUserInterface()
     sender = SendInstructions()
     receiver = ReceiveData()
     json_writer = WriteToJSON()
 
-    instructions = {'temperature': True, 'load': True, 'fan': False}
+    '''
+    instructions = {'temperature': False, 'load': False, 'fan': False}
+    
+    window = tk.Tk()
+    window.title('Hardware Monitor App')
+
+    label = tk.Label(master=window, text="Select the data you would like from OpenHardwareMonitor:")
+
+    temp_button = tk.Button(master=window, text='temperature')
+    temp_button.pack(side="top")
+    temp_button.bind('temperature', button_click)
+
+    load_button = tk.Button(master=window, text='load')
+    load_button.pack(side="top")
+    load_button.bind('load', button_click)
+
+    fan_button = tk.Button(master=window, text='fan speed')
+    fan_button.pack(side="top")
+    fan_button.bind('fan', button_click)
+
+    finish_button = tk.Button(master=window, text='get results')
+    finish_button.pack(side="top")
+    finish_button.bind('finish', button_click)
+
+    window.mainloop()
+    '''
+
+    instructions = gui.instruction_collector()
+
+    print(instructions)
 
     queue_1.put(instructions)
     sender.start()
-    time.sleep(3)
 
     data = receiver.start()
     json_writer.start()

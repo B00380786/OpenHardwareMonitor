@@ -1,4 +1,3 @@
-# test
 """ UDP Server """
 
 import socket

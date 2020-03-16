@@ -11,10 +11,6 @@ import time
 queue_1 = queue.Queue(maxsize=1)  # queue for user instruction to send to server.py
 queue_2 = queue.Queue(maxsize=1)  # queue for received data to be added and to be accessed to write to json
 
-temperature = True
-load = True
-instructions = {'temperature': True, 'load': True}
-
 
 class SendInstructions(threading.Thread):
     def __init__(self):
@@ -25,7 +21,9 @@ class SendInstructions(threading.Thread):
 
     def run(self):
         while True:
-            self.sock.sendto(bytes(str(queue_1.get()), "utf-8"), (self.UDP_IP, self.UDP_PORT))
+            data = queue_1.get()
+            data = json.dumps(data)
+            self.sock.sendto(bytes(str(data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
 
 
 class ReceiveData(threading.Thread):
@@ -58,8 +56,9 @@ class WriteToJSON(threading.Thread):
 
     def run(self):
         if not queue_2.empty():
+            # exception if no attributes were selected
             print("json_thread: started")
-            data = json.dumps(str(queue_2.get()))
+            data = json.loads(str(queue_2.get()))
             with open('data.json', 'a', encoding='utf-8') as f:
                 json.dump(data, f)
             print("json_thread: ended")
@@ -78,6 +77,8 @@ if __name__ == '__main__':
     sender = SendInstructions()
     receiver = ReceiveData()
     json_writer = WriteToJSON()
+
+    instructions = {'temperature': True, 'load': True, 'fan': False}
 
     queue_1.put(instructions)
     sender.start()

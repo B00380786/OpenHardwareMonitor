@@ -2,7 +2,7 @@
 
 import socket
 import time
-# import wmi
+import wmi
 import threading
 import queue
 import json

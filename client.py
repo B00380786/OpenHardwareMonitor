@@ -107,33 +107,6 @@ if __name__ == '__main__':
     receiver = ReceiveData()
     json_writer = WriteToJSON()
 
-    '''
-    instructions = {'temperature': False, 'load': False, 'fan': False}
-    
-    window = tk.Tk()
-    window.title('Hardware Monitor App')
-
-    label = tk.Label(master=window, text="Select the data you would like from OpenHardwareMonitor:")
-
-    temp_button = tk.Button(master=window, text='temperature')
-    temp_button.pack(side="top")
-    temp_button.bind('temperature', button_click)
-
-    load_button = tk.Button(master=window, text='load')
-    load_button.pack(side="top")
-    load_button.bind('load', button_click)
-
-    fan_button = tk.Button(master=window, text='fan speed')
-    fan_button.pack(side="top")
-    fan_button.bind('fan', button_click)
-
-    finish_button = tk.Button(master=window, text='get results')
-    finish_button.pack(side="top")
-    finish_button.bind('finish', button_click)
-
-    window.mainloop()
-    '''
-
     instructions = gui.instruction_collector()
 
     print(instructions)

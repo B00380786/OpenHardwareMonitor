@@ -48,7 +48,6 @@ class ReceiveData(threading.Thread):
             print("didn't receive any data (ReceiveData)")
             self.sock.close()
             print("receive socket closed")
-            break
 
 
 class WriteToJSON(threading.Thread):
@@ -113,11 +112,14 @@ if __name__ == '__main__':
     json_writer = WriteToJSON()
 
     instructions = gui.instruction_collector()
+    time.sleep(3)
 
     print(instructions)
 
     queue_1.put(instructions)
     sender.start()
+
+    time.sleep(5)
 
     data = receiver.start()
     json_writer.start()

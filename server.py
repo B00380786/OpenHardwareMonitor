@@ -9,6 +9,7 @@ import json
 
 queue_1 = queue.Queue(maxsize=1)  # queue for received instructions to dictate OHM data
 queue_2 = queue.Queue(maxsize=10)  # queue for OHM data to be used when sending data
+hardware_monitor = wmi.WMI(namespace=r"root\OpenHardwareMonitor")
 
 
 class ReceiveInstructions(threading.Thread):
@@ -49,35 +50,42 @@ class DataSender(threading.Thread):
 class OpenHardwareMonitor(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        self.hardware_monitor = wmi.WMI(namespace=r"root\OpenHardwareMonitor")
 
     def run(self):
         data = queue_1.get()
         data = json.loads(data)
+        print(data)
         print(type(data))
 
         data_results_temp = {}
         data_results_load = {}
         data_results_fan = {}
+        print('here 1')
 
-        if not data['temperature'] is None:
-            sensors_temp = self.hardware_monitor.Sensor(["Name", "Parent", "Value", "Identifier"],
-                                                        SensorType="Temperature")
+        if data['temperature']:
+            sensors_temp = hardware_monitor.Sensor(["Name", "Parent", "Value", "Identifier"], SensorType="Temperature")
 
+            print(sensors_temp)
+            print('here 2')
             for temperature in sensors_temp:
+                print('here 3')
                 if (temperature.Identifier.find("ram") == -1) and (temperature.Identifier.find("hdd") == -1) and (
                         temperature.Name.find("Package") == -1):
                     data_results_temp['Rec_Type'] = "Temp"
                     sensor_name = temperature.Name
                     data_results_temp[sensor_name] = temperature.value
 
+                    print(temperature.value)
+            print('here 4')
+
             # only put an item on queue if it is populated
             if data_results_temp:
                 print(f'adding to queue - {data_results_temp}')
                 queue_2.put(data_results_temp)
+                print('here 5')
 
-        if not data['load'] is None:
-            sensors_load = self.hardware_monitor.Sensor(SensorType="Load")
+        if data['load']:
+            sensors_load = hardware_monitor.Sensor(SensorType="Load")
             for load in sensors_load:
                 if (load.identifier.find("ram") == -1) and (load.identifier("hdd") == -1) and (
                         load.Name.find("Total") == -1):

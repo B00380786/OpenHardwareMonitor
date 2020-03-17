@@ -60,15 +60,12 @@ class OpenHardwareMonitor(threading.Thread):
         data_results_temp = {}
         data_results_load = {}
         data_results_fan = {}
-        print('here 1')
 
         if data['temperature']:
             sensors_temp = hardware_monitor.Sensor(["Name", "Parent", "Value", "Identifier"], SensorType="Temperature")
 
             print(sensors_temp)
-            print('here 2')
             for temperature in sensors_temp:
-                print('here 3')
                 if (temperature.Identifier.find("ram") == -1) and (temperature.Identifier.find("hdd") == -1) and (
                         temperature.Name.find("Package") == -1):
                     data_results_temp['Rec_Type'] = "Temp"
@@ -76,13 +73,11 @@ class OpenHardwareMonitor(threading.Thread):
                     data_results_temp[sensor_name] = temperature.value
 
                     print(temperature.value)
-            print('here 4')
 
             # only put an item on queue if it is populated
             if data_results_temp:
                 print(f'adding to queue - {data_results_temp}')
                 queue_2.put(data_results_temp)
-                print('here 5')
 
         if data['load']:
             sensors_load = hardware_monitor.Sensor(SensorType="Load")

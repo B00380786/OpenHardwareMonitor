@@ -8,7 +8,7 @@ import queue
 import json
 
 queue_1 = queue.Queue(maxsize=1)  # queue for received instructions to dictate OHM data
-queue_2 = queue.Queue(maxsize=1)  # queue for OHM data to be used when sending data
+queue_2 = queue.Queue(maxsize=10)  # queue for OHM data to be used when sending data
 
 
 class ReceiveInstructions(threading.Thread):
@@ -36,11 +36,13 @@ class DataSender(threading.Thread):
 
     def run(self):
         while True:
-            data = queue_2.get()
-            print(data)
-            data = json.dumps(data)
-            print(data)
-            self.sock.sendto(bytes(str(data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
+            if not queue_2.empty():
+                print("data on the queue to send")
+                q_data = queue_2.get()
+                s_data = json.dumps(q_data)
+                print(f"sending data - {s_data}")
+                self.sock.sendto(bytes(str(s_data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
+                print("data sent to client")
             time.sleep(1)
 
 
@@ -54,7 +56,9 @@ class OpenHardwareMonitor(threading.Thread):
         data = json.loads(data)
         print(type(data))
 
-        data_results = {}
+        data_results_temp = {}
+        data_results_load = {}
+        data_results_fan = {}
 
         if not data['temperature'] is None:
             sensors_temp = self.hardware_monitor.Sensor(["Name", "Parent", "Value", "Identifier"],
@@ -63,19 +67,27 @@ class OpenHardwareMonitor(threading.Thread):
             for temperature in sensors_temp:
                 if (temperature.Identifier.find("ram") == -1) and (temperature.Identifier.find("hdd") == -1) and (
                         temperature.Name.find("Package") == -1):
-                    data_results['temperature'] = temperature.value
-                    # self.temperature = temperature.value
+                    data_results_temp['Rec_Type'] = "Temp"
+                    sensor_name = temperature.Name
+                    data_results_temp[sensor_name] = temperature.value
+
+            # only put an item on queue if it is populated
+            if data_results_temp:
+                print(f'adding to queue - {data_results_temp}')
+                queue_2.put(data_results_temp)
 
         if not data['load'] is None:
             sensors_load = self.hardware_monitor.Sensor(SensorType="Load")
             for load in sensors_load:
                 if (load.identifier.find("ram") == -1) and (load.identifier("hdd") == -1) and (
                         load.Name.find("Total") == -1):
-                    data_results['load'] = load.value
-                    # self.load = load.value
+                    data_results_load['Rec_Type'] = 'Load'
+                    sensor_name = load.name
+                    data_results_load[sensor_name] = load.value
 
-        # data = self.temperature, self.load
-        queue_2.put(data_results)
+                if data_results_load:
+                    print(f"adding to queue - {data_results_load}")
+                    queue_2.put(data_results_load)
 
 
 if __name__ == '__main__':

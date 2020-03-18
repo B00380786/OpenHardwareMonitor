@@ -6,6 +6,7 @@ import tkinter as tk
 import threading
 import queue
 import time
+import logging
 
 queue_1 = queue.Queue(maxsize=1)  # queue for user instruction to send to server.py
 queue_2 = queue.Queue(maxsize=10)  # queue for received data to be added and to be accessed to write to json
@@ -21,6 +22,7 @@ class SendInstructions(threading.Thread):
     def run(self):
         while True:
             data = queue_1.get()
+            print(data)
             data = json.dumps(data)
             self.sock.sendto(bytes(str(data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
             print("request sent to server")

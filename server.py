@@ -2,14 +2,15 @@
 
 import socket
 import time
-import wmi
+# import wmi
 import threading
 import queue
 import json
+import logging
 
 queue_1 = queue.Queue(maxsize=1)  # queue for received instructions to dictate OHM data
 queue_2 = queue.Queue(maxsize=10)  # queue for OHM data to be used when sending data
-hardware_monitor = wmi.WMI(namespace=r"root\OpenHardwareMonitor")
+# hardware_monitor = wmi.WMI(namespace=r"root\OpenHardwareMonitor")
 
 
 class ReceiveInstructions(threading.Thread):
@@ -24,6 +25,7 @@ class ReceiveInstructions(threading.Thread):
     def run(self):
         if not queue_1.full():
             data, addr = self.sock.recvfrom(1024)
+            print(data)
             # data = data.decode()
             queue_1.put(data)
 

@@ -8,8 +8,13 @@ from matplotlib.figure import Figure
 import numpy as np
 import json
 
+'''
 with open('data.json') as f:
     data = json.load(f)
+    '''
+data = []
+for line in open('data.json', 'r'):
+    data.append(json.loads(line))
 
 
 root = tkinter.Tk()  # tkinter base window

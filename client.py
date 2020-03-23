@@ -32,7 +32,7 @@ class ReceiveData(threading.Thread):
         self.UDP_IP = "localhost"
         self.UDP_PORT = 5006
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(5)
+        self.sock.settimeout(30)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
@@ -58,19 +58,22 @@ class ReceiveData(threading.Thread):
 class WriteToJSON(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
+        self.results = {}
 
     def run(self):
         # if not queue_2.empty():
         # exception if no attributes were selected
-        if not queue_2.empty():
-            print("json_thread: started")
-            item = queue_2.get()
-            str_item = str(item.decode("utf-8"))
-            print(f"item {str_item}")
-            data = json.loads(str_item)
-            with open('data.json', 'a', encoding='utf-8') as f:
-                json.dump(data, f)
-            print("json_thread: ended")
+        print('json_thread: STARTED')
+        with open('data.json', 'w') as file:
+            for i in range(0, int(instructions['num'])):
+                data = queue_2.get()
+                data = str(data.decode("utf-8"))
+                # print(data)
+                # json_data = json.dumps(data) + '\n'
+                parsed = json.loads(data)
+                json.dump(parsed, file, indent=4, sort_keys=True, separators=(',', ': '))
+
+        print('json_thread: ENDED')
 
 
 class GraphicalUserInterface:
@@ -134,6 +137,5 @@ if __name__ == '__main__':
 
     time.sleep(5)
 
-    data = receiver.start()
+    receiver.start()
     json_writer.start()
-

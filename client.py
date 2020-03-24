@@ -65,6 +65,7 @@ class WriteToJSON(threading.Thread):
         # exception if no attributes were selected
         print('json_thread: STARTED')
         with open('data.json', 'w') as file:
+            file.write("[")  # write a json array (list)
             for i in range(0, int(instructions['num'])):
                 data = queue_2.get()
                 data = str(data.decode("utf-8"))
@@ -72,6 +73,10 @@ class WriteToJSON(threading.Thread):
                 # json_data = json.dumps(data) + '\n'
                 parsed = json.loads(data)
                 json.dump(parsed, file, indent=4, sort_keys=True, separators=(',', ': '))
+                if i < int(instructions['num'])-1:
+                    file.write(",")  # don't append comma on last entry
+                file.write("\n")
+            file.write("]")  # close the list
 
         print('json_thread: ENDED')
 

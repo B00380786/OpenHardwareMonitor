@@ -8,13 +8,12 @@ from matplotlib.figure import Figure
 import numpy as np
 import json
 
-'''
-with open('data.json') as f:
-    data = json.load(f)
-    '''
-data = []
-for line in open('data.json', 'r'):
-    data.append(json.loads(line))
+data_entries = []
+time_entries = []
+with open('data.json', 'r') as f:
+    for item in f:
+        data = item.("CPU Core #2")
+        time = item.("Time")
 
 
 root = tkinter.Tk()  # tkinter base window
@@ -22,7 +21,7 @@ root.wm_title("Embedding in Tk")  # window title
 
 fig = Figure(figsize=(5, 4), dpi=100)  # create new figure, figsize = width & height(inches), dpi = resolution - default
 t = np.arange(0, 3, 0.1)  # returns evenly spaced values in ndarray format, args: start, stop, step, dtype
-fig.add_subplot(111).plot((data['Time']), (data['CPU Core #2']))  # add axes to the figure as part of a subplot arrangement
+fig.add_subplot(111).plot(time, data)  # add axes to the figure as part of a subplot arrangement
 # 3-digits: nrows, ncols and index in order, defaults to 111
 # .plot plot x versus y, x and y can be list with equal indexes giving coordinates
 

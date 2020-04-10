@@ -6,12 +6,10 @@ import tkinter as tk
 import threading
 import queue
 import time
-# import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-from pandas import DataFrame
 
 queue_1 = queue.Queue(maxsize=1)  # queue for user instruction to send to server.py
 queue_2 = queue.Queue(maxsize=50)  # queue for received data to be added and to be accessed to write to json
@@ -21,7 +19,7 @@ class SendInstructions(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.UDP_IP = "127.0.0.1"
-        self.UDP_PORT = 5005
+        self.UDP_PORT = 5007
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(20)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -45,9 +43,9 @@ class ReceiveData(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.UDP_IP = "localhost"
-        self.UDP_PORT = 5006
+        self.UDP_PORT = 5008
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(60)
+        self.sock.settimeout(120)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
@@ -64,9 +62,9 @@ class ReceiveData(threading.Thread):
                 if x == int(instructions['num']):
                     break
         except socket.timeout:
-            print("didn't receive any data (ReceiveData)")
+            # print("didn't receive any data (ReceiveData)")
             self.sock.close()
-            print("receive socket closed")
+            # print("receive socket closed")
 
 
 class WriteToJSON(threading.Thread):
@@ -180,6 +178,12 @@ class GraphicalUserInterface:
 
         self.add_plots.clear()
         self.add_plots.plot(self.time_entries, self.data_entries)
+        if self.instructions['temperature']:
+            self.add_plots.set_ylabel('Temperature (celsius)')
+        elif self.instructions['load']:
+            self.add_plots.set_ylabel('Load (%)')
+
+        self.add_plots.set_xlabel('Time (s)')
 
 
 if __name__ == '__main__':

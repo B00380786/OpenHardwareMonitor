@@ -6,8 +6,6 @@ import wmi
 import threading
 import queue
 import json
-import pythoncom
-import win32
 
 queue_1 = queue.Queue(maxsize=1)  # queue for received instructions to dictate OHM data
 queue_2 = queue.Queue(maxsize=50)  # queue for OHM data to be used when sending data
@@ -17,9 +15,9 @@ class ReceiveInstructions(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.UDP_IP = "127.0.0.1"
-        self.UDP_PORT = 5005
+        self.UDP_PORT = 5007
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(20)
+        self.sock.settimeout(60)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
@@ -42,7 +40,7 @@ class DataSender(threading.Thread):
         threading.Thread.__init__(self)
         self.send = True
         self.UDP_IP = "127.0.0.1"
-        self.UDP_PORT = 5006
+        self.UDP_PORT = 5008
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def run(self):
@@ -57,7 +55,7 @@ class DataSender(threading.Thread):
                 break
 
 
-class OpenHardwareMonitor():
+class OpenHardwareMonitor:
     def __init__(self):
         pass
 

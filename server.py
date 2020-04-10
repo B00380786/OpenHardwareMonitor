@@ -57,12 +57,11 @@ class DataSender(threading.Thread):
                 break
 
 
-class OpenHardwareMonitor(threading.Thread):
+class OpenHardwareMonitor():
     def __init__(self):
-        threading.Thread.__init__(self)
+        pass
 
     def collect_data(self):
-        pythoncom.CoInitialize()
         record_id = 1
 
         for i in range(int(instructions['num'])):
@@ -84,7 +83,7 @@ class OpenHardwareMonitor(threading.Thread):
 
                 # only put an item on queue if it is populated
                 if data_results_temp:
-                    print(f'adding to queue - {data_results_temp}')
+                    # print(f'adding to queue - {data_results_temp}')
                     queue_2.put(data_results_temp)
 
             if instructions['load']:
@@ -99,13 +98,11 @@ class OpenHardwareMonitor(threading.Thread):
                             data_results_load['Data_Value'] = load.value
 
                     if data_results_load:
-                        print(f"adding to queue - {data_results_load}")
+                        # print(f"adding to queue - {data_results_load}")
                         queue_2.put(data_results_load)
 
             time.sleep(1)
             record_id += 1
-
-        pythoncom.CoUnitialize()
 
 
 if __name__ == '__main__':

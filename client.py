@@ -3,14 +3,15 @@
 import socket
 import json
 import tkinter as tk
-from tkinter import messagebox
 import threading
 import queue
 import time
-import matplotlib.pyplot as plt
-from os import path
+# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+from pandas import DataFrame
 
 queue_1 = queue.Queue(maxsize=1)  # queue for user instruction to send to server.py
 queue_2 = queue.Queue(maxsize=50)  # queue for received data to be added and to be accessed to write to json
@@ -22,14 +23,22 @@ class SendInstructions(threading.Thread):
         self.UDP_IP = "127.0.0.1"
         self.UDP_PORT = 5005
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(20)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
     def run(self):
-        while True:
-            data = queue_1.get()
-            # print(data)
-            data = json.dumps(data)
-            self.sock.sendto(bytes(str(data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
-            # print("request sent to server")
+        try:
+            while True:
+                data = queue_1.get()
+                # print(data)
+                data = json.dumps(data)
+                self.sock.sendto(bytes(str(data), "utf-8"), (self.UDP_IP, self.UDP_PORT))
+                # print("request sent to server")
+        except socket.timeout:
+            # print("didn't receive any data (ReceiveData)")
+            self.sock.close()
+            # print("receive socket closed")
 
 
 class ReceiveData(threading.Thread):
@@ -38,7 +47,7 @@ class ReceiveData(threading.Thread):
         self.UDP_IP = "localhost"
         self.UDP_PORT = 5006
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(120)
+        self.sock.settimeout(60)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.UDP_IP, self.UDP_PORT))
 
@@ -68,7 +77,6 @@ class WriteToJSON(threading.Thread):
         # print('json_thread: STARTED')
 
         with open('data.json', 'w') as file:
-
             data_dict = {'Data': {}}
 
             for i in range(0, int(instructions['num'])):
@@ -91,6 +99,8 @@ class GraphicalUserInterface:
         self.clicked = None
         self.data_entries = []
         self.time_entries = []
+        self.figure = None
+        self.add_plots = None
 
     def instruction_collector(self):
         self.window.title("Open Hardware Monitor")
@@ -137,48 +147,25 @@ class GraphicalUserInterface:
         self.window.destroy()
 
     def graph(self):
-        self.data_entries, self.time_entries = self.data_handler()
-
-        x = self.time_entries
-        y = self.data_entries
-
-        plt.plot(x, y)
-
-        plt.xlabel('time (seconds)')
-        if self.instructions['temperature']:
-            plt.ylabel('temperature (celsius)')
-        else:
-            plt.ylabel('load (percentage)')
-
-        plt.title('Open Hardware Monitor Results')
-
-        plt.show()
-
-        '''
         self.window = tk.Tk()
-        self.window.title('Open Hardware Monitor Results')
+        self.window.title('Open Hardware Monitor Results Graph')
 
-        fig = Figure(figsize=(5, 4), dpi=100)
-        fig.add_subplot(111).plot(x, y)
+        self.figure = Figure(figsize=(5, 5), dpi=100)
+        self.add_plots = self.figure.add_subplot(111)
 
-        canvas = FigureCanvasTkAgg(fig, master=self.window)
+        self.animate()
+
+        canvas = FigureCanvasTkAgg(self.figure, self.window)
         canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
         toolbar = NavigationToolbar2Tk(canvas, self.window)
         toolbar.update()
-
-        button = tk.Button(master=self.window, text="Quit", command=self.quit_graph)
-        button.pack(side=tk.BOTTOM)
-
-        canvas.get_tk_widget().pack(side=self.window.TOP, fill=self.window.BOTH, expand=1)
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.window.mainloop()
-        '''
 
-    def quit_graph(self):
-        self.window.destroy()
-
-    def data_handler(self):
+    def animate(self):
         with open('data.json', 'r') as file:
             file = file.read()
             # print('dict: ' + str(file))
@@ -191,8 +178,8 @@ class GraphicalUserInterface:
             for second in range(0, int(instructions['num'])):
                 self.time_entries.append(second)
 
-        # print('data list: ' + str(self.data_entries))
-        return self.data_entries, self.time_entries
+        self.add_plots.clear()
+        self.add_plots.plot(self.time_entries, self.data_entries)
 
 
 if __name__ == '__main__':
@@ -217,4 +204,3 @@ if __name__ == '__main__':
 
     sender.join()
     receiver.join()
-    exit()

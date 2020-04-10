@@ -143,6 +143,7 @@ class GraphicalUserInterface:
     def quit(self):
         self.get_instructions()
         self.window.destroy()
+        print('Retrieving results...')
 
     def graph(self):
         self.window = tk.Tk()
@@ -205,6 +206,3 @@ if __name__ == '__main__':
     json_writer.join()
 
     gui.graph()
-
-    sender.join()
-    receiver.join()
